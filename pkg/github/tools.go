@@ -16,101 +16,171 @@ type GetGQLClientFn func(context.Context) (*githubv4.Client, error)
 
 // Toolset metadata constants - these define all available toolsets and their descriptions.
 // Tools use these constants to declare which toolset they belong to.
+// Icons are Octicon names from https://primer.style/foundations/icons
 var (
 	ToolsetMetadataAll = registry.ToolsetMetadata{
 		ID:          "all",
 		Description: "Special toolset that enables all available toolsets",
+		Icon:        "apps",
 	}
 	ToolsetMetadataDefault = registry.ToolsetMetadata{
 		ID:          "default",
 		Description: "Special toolset that enables the default toolset configuration. When no toolsets are specified, this is the set that is enabled",
+		Icon:        "check-circle",
 	}
 	ToolsetMetadataContext = registry.ToolsetMetadata{
 		ID:          "context",
 		Description: "Tools that provide context about the current user and GitHub context you are operating in",
 		Default:     true,
+		Icon:        "person",
 	}
 	ToolsetMetadataRepos = registry.ToolsetMetadata{
 		ID:          "repos",
 		Description: "GitHub Repository related tools",
 		Default:     true,
+		Icon:        "repo",
 	}
 	ToolsetMetadataGit = registry.ToolsetMetadata{
 		ID:          "git",
 		Description: "GitHub Git API related tools for low-level Git operations",
+		Icon:        "git-branch",
 	}
 	ToolsetMetadataIssues = registry.ToolsetMetadata{
 		ID:          "issues",
 		Description: "GitHub Issues related tools",
 		Default:     true,
+		Icon:        "issue-opened",
 	}
 	ToolsetMetadataPullRequests = registry.ToolsetMetadata{
 		ID:          "pull_requests",
 		Description: "GitHub Pull Request related tools",
 		Default:     true,
+		Icon:        "git-pull-request",
 	}
 	ToolsetMetadataUsers = registry.ToolsetMetadata{
 		ID:          "users",
 		Description: "GitHub User related tools",
 		Default:     true,
+		Icon:        "people",
 	}
 	ToolsetMetadataOrgs = registry.ToolsetMetadata{
 		ID:          "orgs",
 		Description: "GitHub Organization related tools",
+		Icon:        "organization",
 	}
 	ToolsetMetadataActions = registry.ToolsetMetadata{
 		ID:          "actions",
 		Description: "GitHub Actions workflows and CI/CD operations",
+		Icon:        "workflow",
 	}
 	ToolsetMetadataCodeSecurity = registry.ToolsetMetadata{
 		ID:          "code_security",
 		Description: "Code security related tools, such as GitHub Code Scanning",
+		Icon:        "codescan",
 	}
 	ToolsetMetadataSecretProtection = registry.ToolsetMetadata{
 		ID:          "secret_protection",
 		Description: "Secret protection related tools, such as GitHub Secret Scanning",
+		Icon:        "shield-lock",
 	}
 	ToolsetMetadataDependabot = registry.ToolsetMetadata{
 		ID:          "dependabot",
 		Description: "Dependabot tools",
+		Icon:        "dependabot",
 	}
 	ToolsetMetadataNotifications = registry.ToolsetMetadata{
 		ID:          "notifications",
 		Description: "GitHub Notifications related tools",
+		Icon:        "bell",
 	}
 	ToolsetMetadataExperiments = registry.ToolsetMetadata{
 		ID:          "experiments",
 		Description: "Experimental features that are not considered stable yet",
+		Icon:        "beaker",
 	}
 	ToolsetMetadataDiscussions = registry.ToolsetMetadata{
 		ID:          "discussions",
 		Description: "GitHub Discussions related tools",
+		Icon:        "comment-discussion",
 	}
 	ToolsetMetadataGists = registry.ToolsetMetadata{
 		ID:          "gists",
 		Description: "GitHub Gist related tools",
+		Icon:        "logo-gist",
 	}
 	ToolsetMetadataSecurityAdvisories = registry.ToolsetMetadata{
 		ID:          "security_advisories",
 		Description: "Security advisories related tools",
+		Icon:        "shield",
 	}
 	ToolsetMetadataProjects = registry.ToolsetMetadata{
 		ID:          "projects",
 		Description: "GitHub Projects related tools",
+		Icon:        "project",
 	}
 	ToolsetMetadataStargazers = registry.ToolsetMetadata{
 		ID:          "stargazers",
 		Description: "GitHub Stargazers related tools",
+		Icon:        "star",
 	}
 	ToolsetMetadataDynamic = registry.ToolsetMetadata{
 		ID:          "dynamic",
 		Description: "Discover GitHub MCP tools that can help achieve tasks by enabling additional sets of tools, you can control the enablement of any toolset to access its tools when this toolset is enabled.",
+		Icon:        "tools",
 	}
 	ToolsetLabels = registry.ToolsetMetadata{
 		ID:          "labels",
 		Description: "GitHub Labels related tools",
+		Icon:        "tag",
 	}
 )
+
+func AvailableToolsets() []toolsets.ToolsetMetadata {
+	return []toolsets.ToolsetMetadata{
+		ToolsetMetadataContext,
+		ToolsetMetadataRepos,
+		ToolsetMetadataGit,
+		ToolsetMetadataIssues,
+		ToolsetMetadataPullRequests,
+		ToolsetMetadataUsers,
+		ToolsetMetadataOrgs,
+		ToolsetMetadataActions,
+		ToolsetMetadataCodeSecurity,
+		ToolsetMetadataSecretProtection,
+		ToolsetMetadataDependabot,
+		ToolsetMetadataNotifications,
+		ToolsetMetadataExperiments,
+		ToolsetMetadataDiscussions,
+		ToolsetMetadataGists,
+		ToolsetMetadataSecurityAdvisories,
+		ToolsetMetadataProjects,
+		ToolsetMetadataStargazers,
+		ToolsetMetadataDynamic,
+		ToolsetLabels,
+	}
+}
+
+// GetValidToolsetIDs returns a map of all valid toolset IDs for quick lookup
+func GetValidToolsetIDs() map[toolsets.ToolsetID]bool {
+	validIDs := make(map[toolsets.ToolsetID]bool)
+	for _, toolset := range AvailableToolsets() {
+		validIDs[toolset.ID] = true
+	}
+	// Add special keywords
+	validIDs[ToolsetMetadataAll.ID] = true
+	validIDs[ToolsetMetadataDefault.ID] = true
+	return validIDs
+}
+
+func GetDefaultToolsetIDs() []toolsets.ToolsetID {
+	return []toolsets.ToolsetID{
+		ToolsetMetadataContext.ID,
+		ToolsetMetadataRepos.ID,
+		ToolsetMetadataIssues.ID,
+		ToolsetMetadataPullRequests.ID,
+		ToolsetMetadataUsers.ID,
+	}
+}
 
 // AllTools returns all tools with their embedded toolset metadata.
 // Tool functions return ServerTool directly with toolset info.
@@ -274,8 +344,8 @@ func GenerateToolsetsHelp() string {
 	}
 	defaultTools := strings.Join(defaultStrings, ", ")
 
-	// Get all available toolsets (excludes context and dynamic for display)
-	allToolsets := r.AvailableToolsets("context", "dynamic")
+	// Format available tools with line breaks for better readability
+	allToolsets := AvailableToolsets()
 	var availableToolsLines []string
 	const maxLineLength = 70
 	currentLine := ""
@@ -311,10 +381,6 @@ func GenerateToolsetsHelp() string {
 	return toolsetsHelp
 }
 
-// stubTranslator is a passthrough translator for cases where we need a Registry
-// but don't need actual translations (e.g., getting toolset IDs for CLI help).
-func stubTranslator(_, fallback string) string { return fallback }
-
 // AddDefaultToolset removes the default toolset and expands it to the actual default toolset IDs
 func AddDefaultToolset(result []string) []string {
 	hasDefault := false
@@ -341,6 +407,35 @@ func AddDefaultToolset(result []string) []string {
 		}
 	}
 	return result
+}
+
+// cleanToolsets cleans and handles special toolset keywords:
+// - Duplicates are removed from the result
+// - Removes whitespaces
+// - Validates toolset names and returns invalid ones separately - for warning reporting
+// Returns: (toolsets, invalidToolsets)
+func CleanToolsets(enabledToolsets []string) ([]string, []string) {
+	seen := make(map[string]bool)
+	result := make([]string, 0, len(enabledToolsets))
+	invalid := make([]string, 0)
+	validIDs := GetValidToolsetIDs()
+
+	// Add non-default toolsets, removing duplicates and trimming whitespace
+	for _, toolset := range enabledToolsets {
+		trimmed := strings.TrimSpace(toolset)
+		if trimmed == "" {
+			continue
+		}
+		if !seen[trimmed] {
+			seen[trimmed] = true
+			result = append(result, trimmed)
+			if !validIDs[toolsets.ToolsetID(trimmed)] {
+				invalid = append(invalid, trimmed)
+			}
+		}
+	}
+
+	return result, invalid
 }
 
 func RemoveToolset(tools []string, toRemove string) []string {

@@ -15,6 +15,7 @@ import (
 
 	ghErrors "github.com/github/github-mcp-server/pkg/errors"
 	"github.com/github/github-mcp-server/pkg/lockdown"
+	"github.com/github/github-mcp-server/pkg/octicons"
 	"github.com/github/github-mcp-server/pkg/registry"
 	"github.com/github/github-mcp-server/pkg/sanitize"
 	"github.com/github/github-mcp-server/pkg/translations"
@@ -1008,6 +1009,7 @@ func MergePullRequest(t translations.TranslationHelperFunc) registry.ServerTool 
 		mcp.Tool{
 			Name:        "merge_pull_request",
 			Description: t("TOOL_MERGE_PULL_REQUEST_DESCRIPTION", "Merge a pull request in a GitHub repository."),
+			Icons:       octicons.Icons("git-merge"),
 			Annotations: &mcp.ToolAnnotations{
 				Title:        t("TOOL_MERGE_PULL_REQUEST_USER_TITLE", "Merge pull request"),
 				ReadOnlyHint: false,
@@ -1777,6 +1779,7 @@ func RequestCopilotReview(t translations.TranslationHelperFunc) registry.ServerT
 		mcp.Tool{
 			Name:        "request_copilot_review",
 			Description: t("TOOL_REQUEST_COPILOT_REVIEW_DESCRIPTION", "Request a GitHub Copilot code review for a pull request. Use this for automated feedback on pull requests, usually before requesting a human reviewer."),
+			Icons:       octicons.Icons("copilot"),
 			Annotations: &mcp.ToolAnnotations{
 				Title:        t("TOOL_REQUEST_COPILOT_REVIEW_USER_TITLE", "Request Copilot review"),
 				ReadOnlyHint: false,

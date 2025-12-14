@@ -1174,3 +1174,138 @@ func TestServerToolHandlerPanicOnNil(t *testing.T) {
 
 	tool.Handler(nil)
 }
+
+// testToolsetMetadataWithIcon returns a ToolsetMetadata with an icon for testing
+func testToolsetMetadataWithIcon(id string, icon string) ToolsetMetadata {
+	return ToolsetMetadata{
+		ID:          ToolsetID(id),
+		Description: "Test toolset: " + id,
+		Icon:        icon,
+	}
+}
+
+func TestToolsetMetadataIcons(t *testing.T) {
+	tests := []struct {
+		name      string
+		metadata  ToolsetMetadata
+		wantNil   bool
+		wantCount int
+	}{
+		{
+			name: "metadata with icon returns icons",
+			metadata: ToolsetMetadata{
+				ID:          "repos",
+				Description: "Repository tools",
+				Icon:        "repo",
+			},
+			wantNil:   false,
+			wantCount: 2,
+		},
+		{
+			name: "metadata without icon returns nil",
+			metadata: ToolsetMetadata{
+				ID:          "repos",
+				Description: "Repository tools",
+				Icon:        "",
+			},
+			wantNil:   true,
+			wantCount: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			icons := tc.metadata.Icons()
+			if tc.wantNil {
+				if icons != nil {
+					t.Errorf("Expected nil icons, got %v", icons)
+				}
+				return
+			}
+			if len(icons) != tc.wantCount {
+				t.Errorf("Expected %d icons, got %d", tc.wantCount, len(icons))
+			}
+			// Verify icon properties
+			if len(icons) >= 2 {
+				if icons[0].MIMEType != "image/svg+xml" {
+					t.Errorf("Expected MIME type image/svg+xml, got %s", icons[0].MIMEType)
+				}
+				if icons[0].Sizes[0] != "16x16" {
+					t.Errorf("Expected first icon size 16x16, got %s", icons[0].Sizes[0])
+				}
+				if icons[1].Sizes[0] != "24x24" {
+					t.Errorf("Expected second icon size 24x24, got %s", icons[1].Sizes[0])
+				}
+			}
+		})
+	}
+}
+
+func TestRegisterFuncDoesNotMutateOriginal(t *testing.T) {
+	// Create a tool without icons
+	tool := NewServerToolFromHandler(
+		mcp.Tool{
+			Name:        "test_tool",
+			InputSchema: json.RawMessage(`{"type":"object","properties":{}}`),
+		},
+		testToolsetMetadataWithIcon("repos", "repo"),
+		func(_ any) mcp.ToolHandler {
+			return func(_ context.Context, _ *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+				return nil, nil
+			}
+		},
+	)
+
+	// Verify original has no icons
+	if len(tool.Tool.Icons) != 0 {
+		t.Fatalf("Expected original tool to have no icons, got %d", len(tool.Tool.Icons))
+	}
+
+	// Create a mock server that captures the registered tool
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "1.0.0"}, nil)
+
+	// Register the tool
+	tool.RegisterFunc(server, nil)
+
+	// Original tool should still have no icons (was not mutated)
+	if len(tool.Tool.Icons) != 0 {
+		t.Errorf("Original tool was mutated! Expected 0 icons, got %d", len(tool.Tool.Icons))
+	}
+}
+
+func TestRegisterFuncPreservesExistingIcons(t *testing.T) {
+	customIcons := []mcp.Icon{
+		{Source: "custom-16.svg", MIMEType: "image/svg+xml", Sizes: []string{"16x16"}},
+	}
+
+	// Create a tool with custom icons
+	tool := NewServerToolFromHandler(
+		mcp.Tool{
+			Name:        "test_tool",
+			InputSchema: json.RawMessage(`{"type":"object","properties":{}}`),
+			Icons:       customIcons,
+		},
+		testToolsetMetadataWithIcon("repos", "repo"),
+		func(_ any) mcp.ToolHandler {
+			return func(_ context.Context, _ *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+				return nil, nil
+			}
+		},
+	)
+
+	// Tool has custom icons
+	if len(tool.Tool.Icons) != 1 {
+		t.Fatalf("Expected 1 custom icon, got %d", len(tool.Tool.Icons))
+	}
+
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "1.0.0"}, nil)
+	tool.RegisterFunc(server, nil)
+
+	// Tool should still have its custom icons (not replaced)
+	if len(tool.Tool.Icons) != 1 {
+		t.Errorf("Expected tool to keep 1 custom icon, got %d", len(tool.Tool.Icons))
+	}
+	if tool.Tool.Icons[0].Source != "custom-16.svg" {
+		t.Errorf("Expected custom icon source, got %s", tool.Tool.Icons[0].Source)
+	}
+}

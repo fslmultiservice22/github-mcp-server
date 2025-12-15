@@ -235,7 +235,7 @@ func DefaultToolsetGroup(readOnly bool,
 		)
 	pullRequests := toolsets.NewToolset(ToolsetMetadataPullRequests.ID, ToolsetMetadataPullRequests.Description).
 		AddReadTools(
-			toolsets.NewServerTool(PullRequestRead(getClient, cache, t, flags)),
+			toolsets.NewServerTool(PullRequestRead(getClient, getGQLClient, cache, t, flags)),
 			toolsets.NewServerTool(ListPullRequests(getClient, t)),
 			toolsets.NewServerTool(SearchPullRequests(getClient, t)),
 		).

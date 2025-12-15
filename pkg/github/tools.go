@@ -135,53 +135,6 @@ var (
 	}
 )
 
-func AvailableToolsets() []toolsets.ToolsetMetadata {
-	return []toolsets.ToolsetMetadata{
-		ToolsetMetadataContext,
-		ToolsetMetadataRepos,
-		ToolsetMetadataGit,
-		ToolsetMetadataIssues,
-		ToolsetMetadataPullRequests,
-		ToolsetMetadataUsers,
-		ToolsetMetadataOrgs,
-		ToolsetMetadataActions,
-		ToolsetMetadataCodeSecurity,
-		ToolsetMetadataSecretProtection,
-		ToolsetMetadataDependabot,
-		ToolsetMetadataNotifications,
-		ToolsetMetadataExperiments,
-		ToolsetMetadataDiscussions,
-		ToolsetMetadataGists,
-		ToolsetMetadataSecurityAdvisories,
-		ToolsetMetadataProjects,
-		ToolsetMetadataStargazers,
-		ToolsetMetadataDynamic,
-		ToolsetLabels,
-	}
-}
-
-// GetValidToolsetIDs returns a map of all valid toolset IDs for quick lookup
-func GetValidToolsetIDs() map[toolsets.ToolsetID]bool {
-	validIDs := make(map[toolsets.ToolsetID]bool)
-	for _, toolset := range AvailableToolsets() {
-		validIDs[toolset.ID] = true
-	}
-	// Add special keywords
-	validIDs[ToolsetMetadataAll.ID] = true
-	validIDs[ToolsetMetadataDefault.ID] = true
-	return validIDs
-}
-
-func GetDefaultToolsetIDs() []toolsets.ToolsetID {
-	return []toolsets.ToolsetID{
-		ToolsetMetadataContext.ID,
-		ToolsetMetadataRepos.ID,
-		ToolsetMetadataIssues.ID,
-		ToolsetMetadataPullRequests.ID,
-		ToolsetMetadataUsers.ID,
-	}
-}
-
 // AllTools returns all tools with their embedded toolset metadata.
 // Tool functions return ServerTool directly with toolset info.
 func AllTools(t translations.TranslationHelperFunc) []registry.ServerTool {
@@ -334,7 +287,7 @@ func ToStringPtr(s string) *string {
 // GenerateToolsetsHelp generates the help text for the toolsets flag
 func GenerateToolsetsHelp() string {
 	// Get toolset group to derive defaults and available toolsets
-	r := NewRegistry(stubTranslator).Build()
+	r := NewRegistry(translations.NullTranslationHelper).Build()
 
 	// Format default tools from metadata
 	defaultIDs := r.DefaultToolsetIDs()
@@ -345,7 +298,7 @@ func GenerateToolsetsHelp() string {
 	defaultTools := strings.Join(defaultStrings, ", ")
 
 	// Format available tools with line breaks for better readability
-	allToolsets := AvailableToolsets()
+	allToolsets := r.AvailableToolsets()
 	var availableToolsLines []string
 	const maxLineLength = 70
 	currentLine := ""
@@ -400,7 +353,7 @@ func AddDefaultToolset(result []string) []string {
 	result = RemoveToolset(result, string(ToolsetMetadataDefault.ID))
 
 	// Get default toolset IDs from the Registry
-	r := NewRegistry(stubTranslator).Build()
+	r := NewRegistry(translations.NullTranslationHelper).Build()
 	for _, id := range r.DefaultToolsetIDs() {
 		if !seen[string(id)] {
 			result = append(result, string(id))
@@ -418,7 +371,7 @@ func CleanToolsets(enabledToolsets []string) ([]string, []string) {
 	seen := make(map[string]bool)
 	result := make([]string, 0, len(enabledToolsets))
 	invalid := make([]string, 0)
-	validIDs := GetValidToolsetIDs()
+	r := NewRegistry(translations.NullTranslationHelper).Build()
 
 	// Add non-default toolsets, removing duplicates and trimming whitespace
 	for _, toolset := range enabledToolsets {
@@ -429,7 +382,10 @@ func CleanToolsets(enabledToolsets []string) ([]string, []string) {
 		if !seen[trimmed] {
 			seen[trimmed] = true
 			result = append(result, trimmed)
-			if !validIDs[toolsets.ToolsetID(trimmed)] {
+			// Check if it's a valid toolset (special keywords "all" and "default" are valid)
+			if !r.HasToolset(registry.ToolsetID(trimmed)) &&
+				trimmed != string(ToolsetMetadataAll.ID) &&
+				trimmed != string(ToolsetMetadataDefault.ID) {
 				invalid = append(invalid, trimmed)
 			}
 		}
@@ -481,7 +437,7 @@ func CleanTools(toolNames []string) []string {
 // GetDefaultToolsetIDs returns the IDs of toolsets marked as Default.
 // This is a convenience function that builds a registry to determine defaults.
 func GetDefaultToolsetIDs() []string {
-	r := NewRegistry(stubTranslator).Build()
+	r := NewRegistry(translations.NullTranslationHelper).Build()
 	ids := r.DefaultToolsetIDs()
 	result := make([]string, len(ids))
 	for i, id := range ids {

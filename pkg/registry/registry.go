@@ -174,17 +174,31 @@ func (r *Registry) RegisterTools(ctx context.Context, s *mcp.Server, deps any) {
 
 // RegisterResourceTemplates registers all available resource templates with the server.
 // The context is used for feature flag evaluation.
+// Icons are automatically applied from the toolset metadata if not already set.
 func (r *Registry) RegisterResourceTemplates(ctx context.Context, s *mcp.Server, deps any) {
 	for _, res := range r.AvailableResourceTemplates(ctx) {
-		s.AddResourceTemplate(&res.Template, res.Handler(deps))
+		// Make a shallow copy to avoid mutating the original
+		templateCopy := res.Template
+		// Apply icons from toolset metadata if not already set
+		if len(templateCopy.Icons) == 0 {
+			templateCopy.Icons = res.Toolset.Icons()
+		}
+		s.AddResourceTemplate(&templateCopy, res.Handler(deps))
 	}
 }
 
 // RegisterPrompts registers all available prompts with the server.
 // The context is used for feature flag evaluation.
+// Icons are automatically applied from the toolset metadata if not already set.
 func (r *Registry) RegisterPrompts(ctx context.Context, s *mcp.Server) {
 	for _, prompt := range r.AvailablePrompts(ctx) {
-		s.AddPrompt(&prompt.Prompt, prompt.Handler)
+		// Make a shallow copy to avoid mutating the original
+		promptCopy := prompt.Prompt
+		// Apply icons from toolset metadata if not already set
+		if len(promptCopy.Icons) == 0 {
+			promptCopy.Icons = prompt.Toolset.Icons()
+		}
+		s.AddPrompt(&promptCopy, prompt.Handler)
 	}
 }
 

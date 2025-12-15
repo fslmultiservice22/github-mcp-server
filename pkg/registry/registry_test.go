@@ -1230,11 +1230,11 @@ func TestToolsetMetadataIcons(t *testing.T) {
 				if icons[0].MIMEType != "image/png" {
 					t.Errorf("Expected MIME type image/png, got %s", icons[0].MIMEType)
 				}
-				if icons[0].Sizes[0] != "16x16" {
-					t.Errorf("Expected first icon size 16x16, got %s", icons[0].Sizes[0])
+				if icons[0].Theme != "light" {
+					t.Errorf("Expected first icon theme light, got %s", icons[0].Theme)
 				}
-				if icons[1].Sizes[0] != "24x24" {
-					t.Errorf("Expected second icon size 24x24, got %s", icons[1].Sizes[0])
+				if icons[1].Theme != "dark" {
+					t.Errorf("Expected second icon theme dark, got %s", icons[1].Theme)
 				}
 			}
 		})
